@@ -1,0 +1,149 @@
+
+Optimize the following code if there is anything to improve, if not say so: 
+The code seems to be well written and follows good practices, but there are some improvements that can be made:
+
+The 
+updateCarousel
+ function is doing too much. It's manipulating the DOM directly, updating the state, and running animations. It would be better to split it into smaller functions that only handle one responsibility each.
+Instead of using 
+querySelectorAll
+ to select elements to manipulate, use React refs to get direct references to elements.
+Initialize 
+cr
+ and 
+ar
+ outside of the 
+useEffect
+ hook so they don't have to be redeclared every time the component renders.
+Remove the commented-out 
+getPopular
+ function since it doesn't seem to be used.
+Here's an optimized version of the code:
+
+import React, { useState, useEffect, useRef } from 'react';
+import c from '../constants';
+import gsap from 'gsap';
+import './styles/history.css';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faHome } from '@fortawesome/fontawesome-free-solid';
+
+function History() {
+  const carouselRef = useRef(null);
+  const mediaRef = useRef(null);
+  const titleRef = useRef(null);
+  const descriptionRef = useRef(null);
+
+  const [articles, setArticles] = useState([
+    { name: 'Boat Racing', image: '' },
+    { name: 'Wrestling', image: '' },
+    { name: 'Sumba Island', image: '' },
+  ]);
+
+  const [carousel, setCarousel] = useState([
+    {
+      title: 'Budalangi Floods and Its consequences ',
+      media: `${c.bu}st/boatracing.jpg`,
+      details: 'By Job Obiri',
+      isImage: true,
+    },
+    {
+      title: 'Heros and Heroines ',
+      media: `${c.bu}st/luhyalady.jpg`,
+      details: 'By Rev. Fr. Mandela',
+      isImage: true,
+    },
+    {
+      title: 'Ecological Origin of Polictical System and Leadership ',
+      media: `${c.bu}st/island.mp4`,
+      details: 'Story by Davis Okello',
+      isImage: false,
+    },
+  ]);
+
+  const [selc, setSelc] = useState(0);
+
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      setSelc((prevSelc) => (prevSelc + 1) % carousel.length);
+    }, 5000);
+
+    return () => clearInterval(intervalId);
+  }, [carousel]);
+
+  function handleSelectorClick(index, selector) {
+    setSelc(index);
+    updateLabelAnimation();
+    updateMediaAnimation();
+    updateSelectorClasses(selector);
+  }
+
+  function updateSelectorClasses(selectedSelector) {
+    const selectors = carouselRef.current.querySelectorAll('.selector');
+    selectors.forEach((selector) =>
+      selector.classList.remove('selector--active')
+    );
+    selectedSelector.classList.add('selector--active');
+  }
+
+  function updateLabelAnimation() {
+    gsap.to([titleRef.current, descriptionRef.current], {
+      duration: 0.4,
+      opacity: 0,
+      x: 100,
+      onComplete: () => {
+        updateTitleAndDescription();
+        gsap.to([titleRef.current, descriptionRef.current], {
+          duration: 0.4,
+          opacity: 1,
+          x: 0,
+        });
+      },
+    });
+  }
+
+  function updateTitleAndDescription() {
+    const currentSlide = carousel[selc];
+    titleRef.current.textContent = currentSlide.title;
+    descriptionRef.current.textContent = currentSlide.details;
+  }
+
+  function updateMediaAnimation() {
+    gsap.to(mediaRef.current, {
+      duration: 0.4,
+      opacity: 0,
+      onComplete: () => {
+        updateMedia();
+        gsap.to(mediaRef.current, { duration: 0.4, opacity: 1 });
+      },
+    });
+  }
+
+  function updateMedia() {
+    const currentSlide = carousel[selc];
+    if (currentSlide.isImage) {
+      mediaRef.current.setAttribute('src', currentSlide.media);
+      mediaRef.current.setAttribute('alt', '');
+    } else {
+      mediaRef.current.setAttribute('src', currentSlide.media);
+      mediaRef.current.setAttribute('autoPlay', '');
+      mediaRef.current.setAttribute('loop', '');
+    }
+  }
+
+  return (
+    <div className="history">
+      <div className="content">
+        <div className="title"> Our History</div>
+
+        <div className="carousel" ref={carouselRef}>
+          <div className="items">
+            <div className="item">
+              {carousel[selc].isImage ? (
+                <img
+                  className="media"
+                  src=""
+                  alt=""
+                  ref={mediaRef}
+                />
+              ) : (
+                <video

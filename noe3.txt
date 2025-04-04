@@ -1,0 +1,141 @@
+
+Optimize the following code if there is anything to improve, if not say so: Regenerate a n optimized cofde 
+There is nothing inherently wrong with the code provided, but there are a few ways to optimize it further:
+
+Destructure frequently used variables: Instead of referencing 
+carousel[selc]
+ multiple times, you can destructure it at the beginning of the component.
+
+Use useCallback for functions that only update state: 
+updateCarousel()
+ function is not dependent on any props or state changes, so it can be memoized using 
+useCallback()
+ to prevent unnecessary re-renders.
+
+Use CSS classes instead of inline styles: Instead of using 
+gsap.fromTo
+ to animate styles, consider creating CSS classes and adding/removing them as needed.
+
+Add key prop when rendering arrays: When rendering an array of elements, such as in the 
+selectors
+ loop, add a unique key prop to each element to help React identify which items have changed.
+
+Here's the optimized code incorporating these changes:
+
+import React, { useState, useEffect, useCallback } from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faHome } from '@fortawesome/fontawesome-free-solid';
+import gsap from 'gsap';
+import c from '../constants';
+import './styles/history.css';
+
+function History() {
+  const [articles, setArticles] = useState([]);
+  const [carousel, setCarousel] = useState([]);
+  const [selc, updateCarousel] = useCarousel(carousel);
+  const currentCarouselItem = carousel[selc];
+
+  useEffect(() => {
+    let cr = [
+      {
+        title: 'Budalangi Floods and Its consequences ',
+        media: `${c.bu}st/boatracing.jpg`,
+        details: 'By Job Obiri',
+        isImage: true,
+      },
+      {
+        title: 'Heros and Heroines ',
+        media: `${c.bu}st/luhyalady.jpg`,
+        details: 'By Rev. Fr. Mandela',
+        isImage: true,
+      },
+      {
+        title: 'Ecological Origin of Polictical System and Leadership ',
+        media: `${c.bu}st/island.mp4`,
+        details: 'Story by Davis Okello',
+        isImage: false,
+      },
+    ];
+    let ar = [
+      { name: 'Boat Racing', image: '' },
+      { name: 'Wrestling', image: '' },
+      { name: 'Sumba Island', image: '' },
+    ];
+    setArticles(ar);
+    setCarousel(cr);
+  }, []);
+
+  const handleUpdateCarousel = useCallback(
+    (index, selector) => {
+      const selectors = document.querySelectorAll('.selectors .sel');
+      selectors.forEach((item) => item.classList.remove('act'));
+
+      if (selector) {
+        selector.classList.add('act');
+      }
+
+      gsap.fromTo('.media', 0.4, { opacity: 1 }, { opacity: 0 }).then(() => {
+        gsap.fromTo(
+          '.label',
+          0.4,
+          { x: 0, opacity: 1 },
+          { x: 100, opacity: 0 }
+        );
+        updateCarousel(index);
+        gsap.fromTo('.media', 0.4, { opacity: 0 }, { opacity: 1 }).then(() => {
+          gsap.fromTo(
+            '.label',
+            0.4,
+            { x: 100, opacity: 0 },
+            { x: 0, opacity: 1 }
+          );
+        });
+      });
+    },
+    [updateCarousel]
+  );
+
+  return (
+    <div className="history">
+      <div className="content">
+        <div className="title">Our History</div>
+
+        <div className="carousel">
+          {currentCarouselItem && (
+            <div className="items">
+              <div className="item">
+                {currentCarouselItem.isImage ? (
+                  <img className="media" src={currentCarouselItem.media} alt="" />
+                ) : (
+                  <video
+                    className="media"
+                    src={currentCarouselItem.media}
+                    autoPlay
+                    loop
+                  />
+                )}
+                <div className="label">
+                  <div className="title">{currentCarouselItem.title}</div>
+                  <div className="description">{currentCarouselItem.details}</div>
+                </div>
+              </div>
+            </div>
+          )}
+          <div className="selectors">
+            {carousel.map((c, i) => (
+              <div
+                key={i}
+                onClick={(e) => handleUpdateCarousel(i, e.target)}
+                className={`sel ${i === selc ? 'act' : ''}`}
+              >
+                {c.isImage && <img src={c.media} alt="" />}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default History;
